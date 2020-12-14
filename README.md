@@ -10,6 +10,8 @@
 - [Description](#description)
 - [Bandwidth](#bandwidth)
 - [Environmental Variables](#environmental-variables)
+- [Development Environment Setup](#development-environment-setup)
+- [Run The App](#run-the-app)
 
 <!-- /TOC -->
 
