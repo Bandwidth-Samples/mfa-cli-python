@@ -1,4 +1,4 @@
-# Repo Title REPLACE
+# 2FA CLI Python 
 <a href="http://dev.bandwidth.com"><img src="https://s3.amazonaws.com/bwdemos/BW-VMP.png"/></a>
 </div>
 
@@ -6,23 +6,19 @@
 
 <!-- TOC -->
 
-- [Repo Title REPLACE](#repo-title-replace)
+- [2FA CLI Python](#2fa-cli-python)
 - [Description](#description)
 - [Bandwidth](#bandwidth)
 - [Environmental Variables](#environmental-variables)
-- [Callback URLs](#callback-urls)
-    - [Ngrok](#ngrok)
 
 <!-- /TOC -->
 
 # Description
-A short description of your sample app and its capabilities. 
+A small CLI sample app that creates a 2FA code request, and a 2FA code validation request via Bandwidth's 2FA API
 
 # Bandwidth
 
-In order to use the Bandwidth API users need to set up the appropriate application at the [Bandwidth Dashboard](https://dashboard.bandwidth.com/) and create API tokens.
-
-To create an application log into the [Bandwidth Dashboard](https://dashboard.bandwidth.com/) and navigate to the `Applications` tab.  Fill out the **New Application** form selecting the service (Messaging or Voice) that the application will be used for.  All Bandwidth services require publicly accessible Callback URLs, for more information on how to set one up see [Callback URLs](#callback-urls).
+In order to use the Bandwidth 2FA API, users need to have their applications setup. Please reach out to your account manager to set this up. 
 
 For more information about API credentials see [here](https://dev.bandwidth.com/guides/accountCredentials.html#top)
 
@@ -32,26 +28,19 @@ The sample app uses the below environmental variables.
 BANDWIDTH_ACCOUNT_ID                 // Your Bandwidth Account Id
 BANDWIDTH_USERNAME                   // Your Bandwidth API Token
 BANDWIDTH_PASSWORD                   // Your Bandwidth API Secret
-BANDWIDTH_PHONE_NUMBER                // Your The Bandwidth Phone Number
+BANDWIDTH_PHONE_NUMBER               // Your The Bandwidth Phone Number
 BANDWIDTH_VOICE_APPLICATION_ID       // Your Voice Application Id created in the dashboard
 BANDWIDTH_MESSAGING_APPLICATION_ID   // Your Messaging Application Id created in the dashboard
-BASE_URL                             // Your public base url
-PORT                                 // The port number you wish to run the sample on
 ```
 
-# Callback URLs
+# Development Environment Setup
 
-For a detailed introduction to Bandwidth Callbacks see https://dev.bandwidth.com/guides/callbacks/callbacks.html
-
-Below are the callback paths:
-* `/callbacks/voiceCallback`
-* `<add other callbacks>`
-
-## Ngrok
-
-A simple way to set up a local callback URL for testing is to use the free tool [ngrok](https://ngrok.com/).  
-After you have downloaded and installed `ngrok` run the following command to open a public tunnel to your port (`$PORT`)
-```cmd
-ngrok http $PORT
 ```
-You can view your public URL at `http://127.0.0.1:{PORT}` after ngrok is running.  You can also view the status of the tunnel and requests/responses here.
+pip install -r requirements.txt
+```
+
+# Run The App
+
+```
+python app.py
+```
