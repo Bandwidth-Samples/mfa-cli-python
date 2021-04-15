@@ -13,7 +13,7 @@ try:
     BW_USERNAME = os.environ['BW_USERNAME']
     BW_PASSWORD = os.environ['BW_PASSWORD']
     BW_ACCOUNT_ID = os.environ['BW_ACCOUNT_ID']
-    BW_PHONE_NUMBER = os.environ['BW_PHONE_NUMBER']
+    BW_NUMBER = os.environ['BW_NUMBER']
     BW_VOICE_APPLICATION_ID = os.environ['BW_VOICE_APPLICATION_ID']
     BW_MESSAGING_APPLICATION_ID = os.environ['BW_MESSAGING_APPLICATION_ID']
 except:
@@ -30,7 +30,7 @@ recipient_phone_number = input("Please enter your phone number in E164 format (+
 delivery_method = input("Select your method to receive your 2FA request. Please enter \"voice\" or \"messaging\": ")
 
 if delivery_method == "messaging":
-    from_phone = BW_PHONE_NUMBER
+    from_phone = BW_NUMBER
     to_phone = recipient_phone_number
     application_id = BW_MESSAGING_APPLICATION_ID
     scope = "scope"
@@ -64,7 +64,7 @@ if delivery_method == "messaging":
     else:
         print("Failure")
 else:
-    from_phone = BW_PHONE_NUMBER
+    from_phone = BW_NUMBER
     to_phone = recipient_phone_number
     application_id = BW_VOICE_APPLICATION_ID
     scope = "scope"
