@@ -24,7 +24,7 @@ bandwidth_client = BandwidthClient(
     two_factor_auth_basic_auth_user_name=BW_USERNAME,
     two_factor_auth_basic_auth_password=BW_PASSWORD
 )
-auth_client = bandwidth_client.two_factor_auth_client.client
+auth_client = bandwidth_client.two_factor_auth_client.mfa
 
 recipient_phone_number = input("Please enter your phone number in E164 format (+15554443333): ")
 delivery_method = input("Select your method to receive your 2FA request. Please enter \"voice\" or \"messaging\": ")
@@ -49,12 +49,10 @@ if delivery_method == "messaging":
     code = input("Please enter your received code: ")
 
     body = TwoFactorVerifyRequestSchema(
-        mfrom = from_phone,
         to = to_phone,
         application_id = application_id,
         scope = scope,
         code = code,
-        digits = digits,
         expiration_time_in_minutes = 3
     )
     response = auth_client.create_verify_two_factor(BW_ACCOUNT_ID, body)
@@ -83,12 +81,10 @@ else:
     code = input("Please enter your received code: ")
 
     body = TwoFactorVerifyRequestSchema(
-        mfrom = from_phone,
         to = to_phone,
         application_id = application_id,
         scope = scope,
         code = code,
-        digits = digits,
         expiration_time_in_minutes = 3
     )
     response = auth_client.create_verify_two_factor(BW_ACCOUNT_ID, body)

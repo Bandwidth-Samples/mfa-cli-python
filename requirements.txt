@@ -1,1 +1,13 @@
-bandwidth-sdk
+bandwidth-sdk==9.1.0
+CacheControl==0.12.6
+certifi==2020.12.5
+chardet==4.0.0
+enum34==1.1.10
+idna==2.10
+jsonpickle==0.9.6
+lxml==4.6.3
+msgpack==1.0.2
+python-dateutil==2.8.1
+requests==2.25.1
+six==1.16.0
+urllib3==1.26.4
