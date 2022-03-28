@@ -1,48 +1,47 @@
-# 2FA CLI Python 
-<a href="http://dev.bandwidth.com"><img src="https://s3.amazonaws.com/bwdemos/BW-VMP.png"/></a>
-</div>
+# Multi-Factor Auth CLI
+
+<a href="https://dev.bandwidth.com/docs/mfa">
+  <img src="./icon-mfa.svg" title="Multi-Factor Auth About Page" alt="Multi-Factor Auth About Page"/>
+</a>
 
  # Table of Contents
 
-<!-- TOC -->
-
-- [2FA CLI Python](#2fa-cli-python)
-- [Description](#description)
-- [Bandwidth](#bandwidth)
-- [Environmental Variables](#environmental-variables)
-- [Development Environment Setup](#development-environment-setup)
-- [Run The App](#run-the-app)
-
-<!-- /TOC -->
+* [Description](#description)
+* [Pre-Requisites](#pre-requisites)
+* [Running the Application](#running-the-application)
+* [Environmental Variables](#environmental-variables)
 
 # Description
-A small CLI sample app that creates a 2FA code request, and a 2FA code validation request via Bandwidth's 2FA API
 
-# Bandwidth
+This app allows you to enter your phone number in E164 format to receive a multi-factor auth code either by voice or sms. After entering your phone number and selecting the mfa method, you will receive a text message or phone call with your authentication code. Entering this code in the final prompt will allow you to verify the code. Note that you will need separate applications for voice and messaging depending on which method you would like to use. More information about the application setup can be found in the [Pre-Requisites](#pre-requisites) section.
 
-In order to use the Bandwidth 2FA API, users need to have their applications setup. Please reach out to your account manager to set this up. 
+This app also demonstrates basic API Error handling. By entering an invalid code (e.g. 1), you will receive a `400 Bad Request` from the API, which is handled by the `except` statement at the end of the app.
 
-For more information about API credentials see [here](https://dev.bandwidth.com/guides/accountCredentials.html#top)
+# Pre-Requisites
+
+In order to use the Bandwidth API users need to set up the appropriate application at the [Bandwidth Dashboard](https://dashboard.bandwidth.com/) and create API tokens.
+
+To create an application log into the [Bandwidth Dashboard](https://dashboard.bandwidth.com/) and navigate to the `Applications` tab.  Fill out the **New Application** form selecting the service (Messaging or Voice) that the application will be used for.
+
+For more information about API credentials see our [Account Credentials](https://dev.bandwidth.com/docs/account/credentials) page.
+
+# Running the Application
+
+Use the following command to run the application:
+
+```sh
+python main.py
+```
 
 # Environmental Variables
+
 The sample app uses the below environmental variables.
+
 ```sh
-BW_ACCOUNT_ID                 # Your Bandwidth Account Id
-BW_USERNAME                   # Your Bandwidth API Token
-BW_PASSWORD                   # Your Bandwidth API Secret
-BW_NUMBER                     # Your The Bandwidth Phone Number
-BW_VOICE_APPLICATION_ID       # Your Voice Application Id created in the dashboard
-BW_MESSAGING_APPLICATION_ID   # Your Messaging Application Id created in the dashboard
-```
-
-# Development Environment Setup
-
-```
-pip install -r requirements.txt
-```
-
-# Run The App
-
-```
-python app.py
+BW_ACCOUNT_ID                        # Your Bandwidth Account Id
+BW_USERNAME                          # Your Bandwidth API Username
+BW_PASSWORD                          # Your Bandwidth API Password
+BW_NUMBER                            # The Bandwidth phone number involved with this application
+BW_VOICE_APPLICATION_ID              # Your Voice Application Id created in the dashboard
+BW_MESSAGING_APPLICATION_ID          # Your Messaging Application Id created in the dashboard
 ```
