@@ -98,6 +98,3 @@ try:
 
 except ApiException as e:
     print(e)
-
-
-   
