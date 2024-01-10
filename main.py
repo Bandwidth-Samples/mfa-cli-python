@@ -1,13 +1,11 @@
-"""
-app.py
-
-2FA CLI sample app using Bandwidth's 2FA API
-"""
-from bandwidth.bandwidth_client import BandwidthClient
-from bandwidth.twofactorauth.models.two_factor_code_request_schema import TwoFactorCodeRequestSchema
-from bandwidth.twofactorauth.models.two_factor_verify_request_schema import TwoFactorVerifyRequestSchema
-
 import os
+import sys
+
+import bandwidth
+from bandwidth import ApiException
+import click
+from InquirerPy import inquirer
+
 
 try:
     BW_USERNAME = os.environ['BW_USERNAME']
@@ -16,80 +14,76 @@ try:
     BW_NUMBER = os.environ['BW_NUMBER']
     BW_VOICE_APPLICATION_ID = os.environ['BW_VOICE_APPLICATION_ID']
     BW_MESSAGING_APPLICATION_ID = os.environ['BW_MESSAGING_APPLICATION_ID']
-except:
+except KeyError:
     print("Please set the environmental variables defined in the README")
-    exit()
+    sys.exit(1)
 
-bandwidth_client = BandwidthClient(
-    two_factor_auth_basic_auth_user_name=BW_USERNAME,
-    two_factor_auth_basic_auth_password=BW_PASSWORD
+bandwidth_configuration = bandwidth.Configuration(
+    username=BW_USERNAME,
+    password=BW_PASSWORD
 )
-auth_client = bandwidth_client.two_factor_auth_client.mfa
 
-recipient_phone_number = input("Please enter your phone number in E164 format (+15554443333): ")
-delivery_method = input("Select your method to receive your 2FA request. Please enter \"voice\" or \"messaging\": ")
+bandwidth_api_client = bandwidth.ApiClient(bandwidth_configuration)
+bandwidth_mfa_api_instance = bandwidth.MFAApi(bandwidth_api_client)
 
-if delivery_method == "messaging":
-    from_phone = BW_NUMBER
-    to_phone = recipient_phone_number
-    application_id = BW_MESSAGING_APPLICATION_ID
-    scope = "scope"
-    digits = 6
 
-    body = TwoFactorCodeRequestSchema(
-        mfrom = from_phone,
-        to = to_phone,
-        application_id = application_id,
-        scope = scope,
-        digits = digits,
-        message = "Your temporary {NAME} {SCOPE} code is {CODE}"
+@click.command()
+def send_and_verify_mfa_code():
+    code_expiry_time = 3
+
+    phone_number = inquirer.text(
+        message="Please enter the phone number to receive the MFA code, in E164 format (ex: +15555555555)",
+        validate=lambda x: x.startswith("+1") and len(x) == 12,
+    ).execute()
+    channel = inquirer.rawlist(
+        message="Would you like to send via SMS or Voice",
+        choices=['SMS', 'Voice'],
+    ).execute()
+
+    code_request = bandwidth.models.CodeRequest(
+        var_from=BW_NUMBER,
+        to=phone_number,
+        application_id="",
+        scope="scope",
+        digits=6,
+        message="Your temporary {NAME} {SCOPE} code is {CODE}",
+        expiration_time_in_minutes=code_expiry_time,
     )
-    auth_client.create_messaging_two_factor(BW_ACCOUNT_ID, body)  
 
-    code = input("Please enter your received code: ")
+    match channel:
+        case "SMS":
+            code_request.application_id = BW_MESSAGING_APPLICATION_ID
+            try:
+                bandwidth_mfa_api_instance.generate_messaging_code(BW_ACCOUNT_ID, code_request)
+            except ApiException as e:
+                print(f"Error sending code: {e}")
+                sys.exit(1)
+        case "Voice":
+            code_request.application_id = BW_VOICE_APPLICATION_ID
+            try:
+                bandwidth_mfa_api_instance.generate_voice_code(BW_ACCOUNT_ID, code_request)
+            except ApiException as e:
+                print(f"Error sending code: {e}")
+                sys.exit(1)
 
-    body = TwoFactorVerifyRequestSchema(
-        to = to_phone,
-        application_id = application_id,
-        scope = scope,
-        code = code,
-        expiration_time_in_minutes = 3
+    code = inquirer.text(
+        message="Please enter the code you received",
+    ).execute()
+
+    verify_code_request = bandwidth.models.VerifyCodeRequest(
+        to=phone_number,
+        code=code,
+        expirationTimeInMinutes=code_expiry_time
     )
-    response = auth_client.create_verify_two_factor(BW_ACCOUNT_ID, body)
 
-    if response.body.valid:
-        print("Success!")
-    else:
-        print("Failure")
-else:
-    from_phone = BW_NUMBER
-    to_phone = recipient_phone_number
-    application_id = BW_VOICE_APPLICATION_ID
-    scope = "scope"
-    digits = 6
+    try:
+        bandwidth_mfa_api_instance.verify_code(BW_ACCOUNT_ID, verify_code_request)
+        print("Code verified")
+        sys.exit(0)
+    except ApiException as e:
+        print(f"Error verifying code: {e}")
+        sys.exit(1)
 
-    body = TwoFactorCodeRequestSchema(
-        mfrom = from_phone,
-        to = to_phone,
-        application_id = application_id,
-        scope = scope,
-        digits = digits,
-        message = "Your temporary {NAME} {SCOPE} code is {CODE}"
-    )
-    auth_client.create_voice_two_factor(BW_ACCOUNT_ID, body)  
 
-    code = input("Please enter your received code: ")
-
-    body = TwoFactorVerifyRequestSchema(
-        to = to_phone,
-        application_id = application_id,
-        scope = scope,
-        code = code,
-        expiration_time_in_minutes = 3
-    )
-    response = auth_client.create_verify_two_factor(BW_ACCOUNT_ID, body)
-
-    if response.body.valid:
-        print("Success!")
-    else:
-        print("Failure")
+if __name__ == "__main__":
+    send_and_verify_mfa_code()
