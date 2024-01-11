@@ -33,7 +33,7 @@ def send_and_verify_mfa_code():
 
     phone_number = inquirer.text(
         message="Please enter the phone number to receive the MFA code, in E164 format (ex: +15555555555)",
-        validate=lambda x: x.startswith("+1") and len(x) == 12,
+        validate=lambda x: x.startswith("+1"),
     ).execute()
     channel = inquirer.rawlist(
         message="Would you like to send via SMS or Voice",
