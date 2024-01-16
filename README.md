@@ -10,8 +10,6 @@
 * [Pre-Requisites](#pre-requisites)
 * [Running the Application](#running-the-application)
 * [Environmental Variables](#environmental-variables)
-* [Callback URLs](#callback-urls)
-    * [Ngrok](#ngrok)
 
 # Description
 
