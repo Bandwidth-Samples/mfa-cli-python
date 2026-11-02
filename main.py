@@ -1,89 +1,84 @@
 import os
+import re
 import sys
 
 import bandwidth
-from bandwidth import ApiException
-import click
-from InquirerPy import inquirer
-
 
 try:
-    BW_USERNAME = os.environ['BW_USERNAME']
-    BW_PASSWORD = os.environ['BW_PASSWORD']
     BW_ACCOUNT_ID = os.environ['BW_ACCOUNT_ID']
+    BW_CLIENT_ID = os.environ['BW_CLIENT_ID']
+    BW_CLIENT_SECRET = os.environ['BW_CLIENT_SECRET']
     BW_NUMBER = os.environ['BW_NUMBER']
     BW_VOICE_APPLICATION_ID = os.environ['BW_VOICE_APPLICATION_ID']
     BW_MESSAGING_APPLICATION_ID = os.environ['BW_MESSAGING_APPLICATION_ID']
-except KeyError:
-    print("Please set the environmental variables defined in the README")
+except KeyError as e:
+    print(f"Please set the environmental variables defined in the README\n\n{e}")
     sys.exit(1)
 
 bandwidth_configuration = bandwidth.Configuration(
-    username=BW_USERNAME,
-    password=BW_PASSWORD
+    client_id=BW_CLIENT_ID,
+    client_secret=BW_CLIENT_SECRET
 )
 
 bandwidth_api_client = bandwidth.ApiClient(bandwidth_configuration)
 bandwidth_mfa_api_instance = bandwidth.MFAApi(bandwidth_api_client)
 
+E164_PATTERN = re.compile(r"^\+[1-9]\d{1,14}$")
+SCOPE = "sample"
 
-@click.command()
-def send_and_verify_mfa_code():
-    code_expiry_time = 3
 
-    phone_number = inquirer.text(
-        message="Please enter the phone number to receive the MFA code, in E164 format (ex: +15555555555)",
-        validate=lambda x: x.startswith("+1"),
-    ).execute()
-    channel = inquirer.rawlist(
-        message="Would you like to send via SMS or Voice",
-        choices=['SMS', 'Voice'],
-    ).execute()
-
-    code_request = bandwidth.models.CodeRequest(
-        var_from=BW_NUMBER,
-        to=phone_number,
-        application_id="",
-        scope="scope",
-        digits=6,
-        message="Your temporary {NAME} {SCOPE} code is {CODE}",
-        expiration_time_in_minutes=code_expiry_time,
-    )
-
-    match channel:
-        case "SMS":
-            code_request.application_id = BW_MESSAGING_APPLICATION_ID
-            try:
-                bandwidth_mfa_api_instance.generate_messaging_code(BW_ACCOUNT_ID, code_request)
-            except ApiException as e:
-                print(f"Error sending code: {e}")
-                sys.exit(1)
-        case "Voice":
-            code_request.application_id = BW_VOICE_APPLICATION_ID
-            try:
-                bandwidth_mfa_api_instance.generate_voice_code(BW_ACCOUNT_ID, code_request)
-            except ApiException as e:
-                print(f"Error sending code: {e}")
-                sys.exit(1)
-
-    code = inquirer.text(
-        message="Please enter the code you received",
-    ).execute()
-
-    verify_code_request = bandwidth.models.VerifyCodeRequest(
-        to=phone_number,
-        code=code,
-        expirationTimeInMinutes=code_expiry_time
-    )
-
+def prompt(text: str) -> str:
     try:
-        bandwidth_mfa_api_instance.verify_code(BW_ACCOUNT_ID, verify_code_request)
-        print("Code verified")
-        sys.exit(0)
-    except ApiException as e:
-        print(f"Error verifying code: {e}")
+        return input(text).strip()
+    except EOFError:
         sys.exit(1)
 
 
+def main():
+    phone_number = prompt("Enter the phone number to send the code to (E.164, e.g. +15554443333): ")
+    if not E164_PATTERN.match(phone_number):
+        print("Phone number must be in E.164 format, e.g. +15554443333", file=sys.stderr)
+        sys.exit(1)
+
+    method = prompt("Send the code by messaging or voice? [messaging]: ").lower() or "messaging"
+    if method not in ("messaging", "voice"):
+        print("Method must be messaging or voice", file=sys.stderr)
+        sys.exit(1)
+
+    print(f"Sending a code by {method} to {phone_number}")
+    try:
+        code_request = bandwidth.models.CodeRequest(
+            to=phone_number,
+            var_from=BW_NUMBER,
+            application_id=BW_VOICE_APPLICATION_ID if method == "voice" else BW_MESSAGING_APPLICATION_ID,
+            scope=SCOPE,
+            message="Your temporary {NAME} {SCOPE} code is {CODE}",
+            digits=6
+        )
+        if method == "voice":
+            bandwidth_mfa_api_instance.generate_voice_code(BW_ACCOUNT_ID, code_request)
+        else:
+            bandwidth_mfa_api_instance.generate_messaging_code(BW_ACCOUNT_ID, code_request)
+    except Exception as e:
+        print(f"Failed to send code: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    code = prompt("Enter the code you received: ")
+    try:
+        verify_request = bandwidth.models.VerifyCodeRequest(
+            to=phone_number,
+            scope=SCOPE,
+            expiration_time_in_minutes=3,
+            code=code
+        )
+        valid = bandwidth_mfa_api_instance.verify_code(BW_ACCOUNT_ID, verify_request).valid
+    except Exception as e:
+        print(f"Failed to verify code: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    print("Code verified" if valid else "Code not verified")
+    sys.exit(0 if valid else 1)
+
+
 if __name__ == "__main__":
-    send_and_verify_mfa_code()
+    main()
